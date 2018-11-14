@@ -9,8 +9,9 @@ int main(int argc, char* argv[]) {
 
 	glutDisplayFunc(display); // refresh function
 	glutIdleFunc(idle); // idle: when nothing happens
-	glutMouseFunc(mouse);
+	//glutMouseFunc(mouse);
 	init();
+	startLearning();
 
 	glutMainLoop();
 }

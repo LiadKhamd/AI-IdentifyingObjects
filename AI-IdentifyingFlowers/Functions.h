@@ -17,9 +17,11 @@ const int SCRSZ = 256;
 const int INPUT_SZ = SCRSZ + 1;//1-bios
 const int HIDDEN_SZ = INPUT_SZ / 2 + 1;//1-bios
 const int OUTPUT_SZ = 3;
+const int ITEMS = 18;
 const static char* FLOWERS[OUTPUT_SZ] = { "chrysanthemum", "rose", "tulip"};
 
 void LoadBitmap(char * filename);
+void LoadImage(char* name);
 void init();
 void DrawSquares();
 void HPF();
@@ -32,3 +34,4 @@ void idle();
 void drag(int x, int y);
 
 void mouse(int button, int state, int x, int y);
+void startLearning();

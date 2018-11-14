@@ -33,15 +33,11 @@ void LoadBitmap(char * filename)
 	fread(bmp, 1, sz, pf);
 }
 
-void init()
-{
+void LoadImage(char* name) {
 	int k, sz = TMPSZ*TMPSZ * 3;
 	int i, j;
 
-	srand(time(0));
-	Clean();
-
-	LoadBitmap("c1.bmp");
+	LoadBitmap(name);
 
 	for (k = 0, j = 0, i = 0; k < sz; k += 3)
 	{
@@ -55,6 +51,9 @@ void init()
 			i++;
 		}
 	}
+
+	free(bmp);
+
 	// copy picture to screen
 	for (i = 0; i < SCRSZ; i++)
 		for (j = 0; j < SCRSZ; j++)
@@ -66,6 +65,14 @@ void init()
 			screen[i][j][2] = (picture[i * 2][j * 2][2] + picture[i * 2][j * 2 + 1][2] +
 				picture[i * 2 + 1][j * 2][2] + picture[i * 2 + 1][j * 2 + 1][2]) / 4;
 		}
+}
+
+void init()
+{
+	int i, j;
+
+	srand(time(0));
+	Clean();
 
 	// set random weights
 	for (i = 0; i < INPUT_SZ; i++)
@@ -123,7 +130,6 @@ void HPF()
 			squares[i][j][0] = squares[i][j][1] = squares[i][j][2] =
 			(int)fabs(4 * screen[i][j][0] - screen[i - 1][j][0] -
 				screen[i + 1][j][0] - screen[i][j - 1][0] - screen[i][j + 1][0]);
-	tutor_digit = -1;
 }
 
 int MaxOutput()
@@ -207,6 +213,7 @@ void FeedForward()
 	printf("\n");
 
 	network_digit = MaxOutput();
+	printf("%d\n", network_digit);
 }
 
 void Backpropagation()
@@ -287,5 +294,29 @@ void mouse(int button, int state, int x, int y)
 		//	Backpropagation();
 		//}
 		printf("x=%d\ty=%d\n", x, y);
+	}
+}
+
+void startLearning() {
+	bool found;
+	char name[7] = "c1.bmp";
+	for (int i = 0; i < ITEMS; i++)
+	{
+		found = false;
+		name[0] = FLOWERS[i%OUTPUT_SZ][0];
+		name[1] = i/OUTPUT_SZ+1+'0' ;
+		printf("%s\n", name);
+		LoadImage(name);
+		HPF();
+		while (!found)
+		{
+			tutor_digit = -1;
+			FeedForward();
+			tutor_digit = i%OUTPUT_SZ;
+			printf("%d == %d\n", network_digit, tutor_digit);
+			if (network_digit == tutor_digit)
+				found = true;
+			Backpropagation();
+		}
 	}
 }
