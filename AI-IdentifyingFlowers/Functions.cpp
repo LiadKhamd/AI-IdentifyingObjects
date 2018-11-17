@@ -15,6 +15,12 @@ double delta_hidden[HIDDEN_SZ];
 int network_digit = -1, tutor_digit = -1;
 double learning_rate = 0.1;
 
+int iterLern = 0;
+
+bool test_ANN = false;
+int testIter = 0;
+bool start_learning = false;
+
 unsigned char* bmp;
 
 void LoadBitmap(char * filename)
@@ -24,6 +30,12 @@ void LoadBitmap(char * filename)
 	BITMAPINFOHEADER bi;
 	FILE* pf = fopen(filename, "rb"); // read binary file
 
+	if (!pf)
+	{
+		printf("File problem: %s\n", filename);
+		exit(1);
+	}
+
 	fread(&bf, sizeof(bf), 1, pf);
 	fread(&bi, sizeof(bi), 1, pf);
 	sz = bi.biHeight * bi.biWidth * 3;
@@ -31,6 +43,7 @@ void LoadBitmap(char * filename)
 	bmp = (unsigned char*)malloc(sz);
 
 	fread(bmp, 1, sz, pf);
+	fclose(pf);
 }
 
 void LoadImage(char* name) {
@@ -114,7 +127,8 @@ void DrawSquares()
 		glColor3d(1, 1, 1);
 
 		glRasterPos2d(left + 0.15, bottom + 0.025);
-		for (int j = 0; j < strlen(FLOWERS[i]); j++)
+		int len = strlen(FLOWERS[i]);
+		for (int j = 0; j < len; j++)
 			glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, FLOWERS[i][j]);
 
 		top -= 0.2;
@@ -159,8 +173,6 @@ void Clean()
 			squares[i][j][1] = 255;
 			squares[i][j][2] = 255;
 		}
-
-	network_digit = -1;
 }
 
 void FeedForward()
@@ -213,7 +225,6 @@ void FeedForward()
 	printf("\n");
 
 	network_digit = MaxOutput();
-	printf("%d\n", network_digit);
 }
 
 void Backpropagation()
@@ -249,8 +260,6 @@ void Backpropagation()
 	for (i = 0; i < INPUT_SZ; i++)
 		for (j = 0; j < HIDDEN_SZ; j++)
 			i2h[i][j] -= learning_rate*input[i] * delta_hidden[j];
-
-	Clean();
 }
 
 void display()
@@ -271,52 +280,67 @@ void display()
 
 void idle()
 {
+	if (start_learning)
+		startLearning();
+	if (test_ANN)
+		testANN();
 	glutPostRedisplay();// calls indirectly to display
-}
-
-void mouse(int button, int state, int x, int y)
-{
-	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-	{
-		if (x > W / 4 && x<W / 4 + SCRSZ&& H - y >  H / 4 && H - y < H / 4 + SCRSZ) // click in bottom screen
-		{
-		}
-		//if (x > W / 4 && x<W / 4 + SCRSZ
-		//	&& H - y >  H / 4 && H - y < H / 4 + SCRSZ) // click in bottom screen
-		//{
-		//	HPF();
-		//	FeedForward();
-		//}
-		//if (x > 3 * W / 4 && x < 3 * W / 4 + W / 20)
-		//{
-		//	tutor_digit = y / (H / 10);
-		//	// start Backpropagation
-		//	Backpropagation();
-		//}
-		printf("x=%d\ty=%d\n", x, y);
-	}
 }
 
 void startLearning() {
 	bool found;
-	char name[7] = "c1.bmp";
-	for (int i = 0; i < ITEMS; i++)
+	char name[7] = "  .bmp";
+	if (iterLern < LEARN_ITER)
 	{
 		found = false;
-		name[0] = FLOWERS[i%OUTPUT_SZ][0];
-		name[1] = i/OUTPUT_SZ+1+'0' ;
+		name[0] = FLOWERS[iterLern%OUTPUT_SZ][0];
+		name[1] = (iterLern / OUTPUT_SZ) % PIC_TYPES + 1 + '0';
 		printf("%s\n", name);
 		LoadImage(name);
 		HPF();
-		while (!found)
-		{
-			tutor_digit = -1;
-			FeedForward();
-			tutor_digit = i%OUTPUT_SZ;
-			printf("%d == %d\n", network_digit, tutor_digit);
-			if (network_digit == tutor_digit)
-				found = true;
+		tutor_digit = iterLern%OUTPUT_SZ;
+		FeedForward();
+		if (tutor_digit != network_digit)
 			Backpropagation();
-		}
+		iterLern++;
+	}
+	else
+	{
+		start_learning = false;
+		tutor_digit = network_digit = -1;
+		Clean();
+	}
+}
+
+void testANN() {
+	char name[10] = " Test.bmp";
+	if (testIter < TEST_ITEM)
+	{
+		name[0] = FLOWERS[testIter%OUTPUT_SZ][0];
+		printf("%s\n", name);
+		LoadImage(name);
+		HPF();
+		FeedForward();
+		network_digit = MaxOutput();
+		tutor_digit = testIter;
+		testIter++;
+	}
+	else
+	{
+		printf("Test Done!!!\n");
+	}
+	test_ANN = false;
+}
+
+void Menu(int choice)
+{
+	switch (choice)
+	{
+	case 1:
+		start_learning = true;
+		break;
+	case 2:
+		test_ANN = true;
+		break;
 	}
 }

@@ -5,13 +5,16 @@ int main(int argc, char* argv[]) {
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
 	glutInitWindowSize(W, H);
 	glutInitWindowPosition(200, 100);
-	glutCreateWindow("AI-IdentifyingNumbers");
+	glutCreateWindow("AI-IdentifyingFlowers");
 
 	glutDisplayFunc(display); // refresh function
 	glutIdleFunc(idle); // idle: when nothing happens
-	//glutMouseFunc(mouse);
 	init();
-	startLearning();
+
+	glutCreateMenu(Menu);
+	glutAddMenuEntry("Start learning", 1);
+	glutAddMenuEntry("Test ANN", 2);
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
 
 	glutMainLoop();
 }
