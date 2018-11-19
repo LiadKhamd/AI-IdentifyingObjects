@@ -24,7 +24,7 @@ and go on to first step in order to practice the ANN.
 In order to practice the ANN to this:
 
 1. Open menu - and select learning
-![first step](https://user-images.githubusercontent.com/43498633/48659734-5fce9680-ea5e-11e8-9fa2-65674f568947.png)
+![first step](https://user-images.githubusercontent.com/43498633/48695250-56246a80-ebe7-11e8-940f-75dbec924128.png)
 
 2. After learning select - Test in order to test the ANN
-![second step](https://user-images.githubusercontent.com/43498633/48659469-5fcc9780-ea5a-11e8-84ae-1f987669dac0.png)
+![second step](https://user-images.githubusercontent.com/43498633/48695291-76ecc000-ebe7-11e8-89ef-cc768d9e7fb7.png)
