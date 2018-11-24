@@ -19,7 +19,7 @@ int iterLern = 0;
 
 bool test_ANN = false;
 int testIter = 0;
-bool start_learning = false;
+bool start_learning = false, interDone = false;
 
 unsigned char* bmp;
 
@@ -77,6 +77,30 @@ void LoadImage(char* name) {
 				picture[i * 2 + 1][j * 2][1] + picture[i * 2 + 1][j * 2 + 1][1]) / 4;
 			screen[i][j][2] = (picture[i * 2][j * 2][2] + picture[i * 2][j * 2 + 1][2] +
 				picture[i * 2 + 1][j * 2][2] + picture[i * 2 + 1][j * 2 + 1][2]) / 4;
+		}
+}
+
+double sigmoid(double x) {
+	return(1.0 / (1.0 + exp(-x)));
+}
+
+void Clean()
+{
+	int i, j;
+	for (i = 0; i < SCRSZ; i++)
+		for (j = 0; j < SCRSZ; j++)
+		{
+			screen[i][j][0] = 255;
+			screen[i][j][1] = 255;
+			screen[i][j][2] = 255;
+		}
+
+	for (i = 0; i < SCRSZ; i++)
+		for (j = 0; j < SCRSZ; j++)
+		{
+			squares[i][j][0] = 255;
+			squares[i][j][1] = 255;
+			squares[i][j][2] = 255;
 		}
 }
 
@@ -155,38 +179,26 @@ int MaxOutput()
 	return max;
 }
 
-void Clean()
-{
-	int i, j;
-	for (i = 0; i < SCRSZ; i++)
-		for (j = 0; j < SCRSZ; j++)
-		{
-			screen[i][j][0] = 255;
-			screen[i][j][1] = 255;
-			screen[i][j][2] = 255;
-		}
-
-	for (i = 0; i < SCRSZ; i++)
-		for (j = 0; j < SCRSZ; j++)
-		{
-			squares[i][j][0] = 255;
-			squares[i][j][1] = 255;
-			squares[i][j][2] = 255;
-		}
-}
-
 void FeedForward()
 {
+
 	int i, j;
+	//printf("BEFORE OUTPUT\n");
+	//for (i = 0; i < OUTPUT_SZ; i++)
+	//	printf("%.3lf ", output[i]);
+
+	//printf("\n\n");
+
 	// 1. setup input layer
-	for (i = 5; i < SCRSZ; i += 10)
-		for (j = 5; j < SCRSZ; j += 10)
-		{
-			if (squares[i][j][0] == 0)
-				input[(i / 10) * 10 + (j / 10)] = 1;
-			else
-				input[(i / 10) * 10 + (j / 10)] = 0;
-		}
+	for (i = 0; i < SCRSZ - 1; i += 2)
+	{
+		int c = 0;
+		for (j = 0; j < 3; j++)
+			c += squares[i][i][j] + squares[i][i + 1][j] + squares[i + 1][i][j] + squares[i + 1][i + 1][j];
+		input[i] = c / 255;
+		if (input[i] != 0)
+			input[i] = input[i] / input[i];
+	}
 
 	input[INPUT_SZ - 1] = 1; // bias for input layer
 
@@ -201,7 +213,7 @@ void FeedForward()
 
 	// add sigmoid
 	for (i = 0; i < HIDDEN_SZ; i++)
-		hidden[i] = 1 / (1 + exp(hidden[i]));
+		hidden[i] = sigmoid(hidden[i]);
 
 	// set bias for hidden layer
 	hidden[HIDDEN_SZ - 1] = 1;
@@ -215,14 +227,14 @@ void FeedForward()
 
 	// add sigmoid
 	for (i = 0; i < OUTPUT_SZ; i++)
-		output[i] = 1 / (1 + exp(output[i]));
+		output[i] = sigmoid(output[i]);
 
 	// show it
-	printf("OUTPUT\n");
-	for (i = 0; i < OUTPUT_SZ; i++)
-		printf("%.3lf ", output[i]);
+	//printf("OUTPUT\n");
+	//for (i = 0; i < OUTPUT_SZ; i++)
+	//	printf("%.3lf ", output[i]);
 
-	printf("\n");
+	//printf("\n\n");
 
 	network_digit = MaxOutput();
 }
@@ -255,11 +267,11 @@ void Backpropagation()
 	// 4. update weights in h2o
 	for (i = 0; i < HIDDEN_SZ; i++)
 		for (j = 0; j < OUTPUT_SZ; j++)
-			h2o[i][j] -= learning_rate*hidden[i] * delta_output[j];
+			h2o[i][j] += learning_rate*hidden[i] * delta_output[j];
 	// 5. update weights in i2h
 	for (i = 0; i < INPUT_SZ; i++)
 		for (j = 0; j < HIDDEN_SZ; j++)
-			i2h[i][j] -= learning_rate*input[i] * delta_hidden[j];
+			i2h[i][j] += learning_rate*input[i] * delta_hidden[j];
 }
 
 void display()
@@ -278,58 +290,77 @@ void display()
 	glutSwapBuffers();// show what was drawn in "frame buffer"
 }
 
-void idle()
-{
-	if (start_learning)
-		startLearning();
-	if (test_ANN)
-		testANN();
-	glutPostRedisplay();// calls indirectly to display
-}
-
 void startLearning() {
-	bool found;
+	static int numberOfSession = 1;
 	char name[7] = "  .bmp";
-	if (iterLern < LEARN_ITER)
+	if (iterLern < LEARNING_SEESION)
 	{
-		found = false;
-		name[0] = FLOWERS[iterLern%OUTPUT_SZ][0];
-		name[1] = (iterLern / OUTPUT_SZ) % PIC_TYPES + 1 + '0';
-		printf("%s\n", name);
-		LoadImage(name);
-		HPF();
-		tutor_digit = iterLern%OUTPUT_SZ;
+		if (interDone || iterLern == 0)
+		{
+			name[0] = FLOWERS[rand() % OUTPUT_SZ][0];
+			name[1] = (iterLern / OUTPUT_SZ) % PIC_TYPES + 1 + '0';
+			//printf("%s\n", name);
+			LoadImage(name);
+			HPF();
+			tutor_digit = iterLern%OUTPUT_SZ;
+			iterLern++;
+			interDone = false;
+		}
 		FeedForward();
-		if (tutor_digit != network_digit)
-			Backpropagation();
-		iterLern++;
+		if (tutor_digit == network_digit)
+			interDone = true;
+		Backpropagation();
 	}
 	else
 	{
-		start_learning = false;
+		if (!test_ANN)
+		{
+			printf("ANN learn: %d iteration\n", numberOfSession*LEARNING_SEESION);
+			if (numberOfSession >= NUMBER_OF_SEESION)
+				start_learning = false;
+			else
+			{
+				numberOfSession++;
+				iterLern = 0;
+			}
+			test_ANN = true;
+		}
+		else
+			testANN();
 		tutor_digit = network_digit = -1;
 		Clean();
 	}
 }
 
 void testANN() {
-	char name[10] = " Test.bmp";
-	if (testIter < TEST_ITEM)
+	static int accept = 0;
+	static int last = 0;
+	char name[11] = "  Test.bmp";
+	if (testIter < OUTPUT_SZ*TEST_ITEM)
 	{
 		name[0] = FLOWERS[testIter%OUTPUT_SZ][0];
-		printf("%s\n", name);
+		name[1] = testIter / OUTPUT_SZ + '0';
+		//printf("%s\n", name);
 		LoadImage(name);
 		HPF();
 		FeedForward();
 		network_digit = MaxOutput();
-		tutor_digit = testIter;
+		tutor_digit = testIter% OUTPUT_SZ;
+		if (tutor_digit == network_digit)
+			accept++;
 		testIter++;
 	}
 	else
 	{
-		printf("Test Done!!!\n");
+		if (accept > last)
+			learning_rate *= 0.8;
+		else
+			learning_rate *= 1.1;
+		printf("Test Done!!!\tResult: %d\\%d\n", accept, OUTPUT_SZ*TEST_ITEM);
+		last = accept;
+		testIter = accept = 0;
+		test_ANN = false;
 	}
-	test_ANN = false;
 }
 
 void Menu(int choice)
@@ -343,4 +374,13 @@ void Menu(int choice)
 		test_ANN = true;
 		break;
 	}
+}
+
+void idle()
+{
+	if (start_learning)
+		startLearning();
+	if (test_ANN)
+		testANN();
+	glutPostRedisplay();// calls indirectly to display
 }
