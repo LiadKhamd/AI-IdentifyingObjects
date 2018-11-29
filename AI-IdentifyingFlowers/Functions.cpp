@@ -353,10 +353,15 @@ void testANN() {
 	else
 	{
 		if (accept > last)
-			learning_rate *= 0.8;
+			learning_rate *= 0.90;
 		else
-			learning_rate *= 1.1;
-		printf("Test Done!!!\tResult: %d\\%d\n", accept, OUTPUT_SZ*TEST_ITEM);
+		{
+			if (accept < last)
+				learning_rate *= 1.1;
+			else
+				learning_rate *= 0.95;
+		}
+		printf("Test Done!!!\tResult: %d\\%d\t%f\n", accept, OUTPUT_SZ*TEST_ITEM, learning_rate);
 		last = accept;
 		testIter = accept = 0;
 		test_ANN = false;
