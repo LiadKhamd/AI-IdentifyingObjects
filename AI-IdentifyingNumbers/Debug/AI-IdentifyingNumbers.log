@@ -1,6 +1,1 @@
-﻿  Main.cpp
-  Functions.cpp
-d:\projects\visual studio\ai-identifyingobjects\ai-identifyingnumbers\functions.cpp(33): warning C4305: 'argument': truncation from 'double' to 'GLclampf'
-  Generating Code...
-  AI-IdentifyingNumbers.vcxproj -> D:\Projects\Visual studio\AI-IdentifyingObjects\Debug\AI-IdentifyingNumbers.exe
-  AI-IdentifyingNumbers.vcxproj -> D:\Projects\Visual studio\AI-IdentifyingObjects\Debug\AI-IdentifyingNumbers.pdb (Full PDB)
+﻿

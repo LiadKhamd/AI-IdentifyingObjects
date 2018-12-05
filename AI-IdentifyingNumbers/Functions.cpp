@@ -140,7 +140,7 @@ void FeedForward()
 
 	// add sigmoid
 	for (i = 0; i < HIDDEN_SZ; i++)
-		hidden[i] = 1 / (1 + exp(hidden[i]));
+		hidden[i] = 1 / (1 + exp(-hidden[i]));
 
 	// set bias for hidden layer
 	hidden[HIDDEN_SZ - 1] = 1;
@@ -153,7 +153,7 @@ void FeedForward()
 
 	// add sigmoid
 	for (i = 0; i < OUTPUT_SZ; i++)
-		output[i] = 1 / (1 + exp(output[i]));
+		output[i] = 1 / (1 + exp(-output[i]));
 
 	// show it
 	printf("\nOUTPUT\n");
@@ -196,12 +196,12 @@ void Backpropagation()
 	// 4. update weights in h2o
 	for (i = 0; i < HIDDEN_SZ; i++)
 		for (j = 0; j < OUTPUT_SZ; j++)
-			h2o[i][j] -= learning_rate*hidden[i] * delta_output[j];
+			h2o[i][j] += learning_rate*hidden[i] * delta_output[j];
 
 	// 5. update weights in i2h
 	for (i = 0; i < INPUT_SZ; i++)
 		for (j = 0; j < HIDDEN_SZ; j++)
-			i2h[i][j] -= learning_rate*input[i] * delta_hidden[j];
+			i2h[i][j] += learning_rate*input[i] * delta_hidden[j];
 
 	Clean();
 }
